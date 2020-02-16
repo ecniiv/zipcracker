@@ -1,5 +1,6 @@
 # Zipcracker
 
+I first created this program for a challenge, then I decided to spend more time on it to personalize it with different options. *Zipcracker* is not optimal and there are certainly several ways to improve it.
 
 ## Usage
 
