@@ -14,7 +14,7 @@ DEFAULT_MIN_LENGTH      = 1
 DEFAULT_MAX_LENGTH      = 6
 
 # Return the password if it founds it, None otherwise.
-def crack(fzip, fzipAES, prefix, alphabet, minlength, maxlength):
+def crack(fzipAES, prefix, alphabet, minlength, maxlength):
     count_range = range(minlength, maxlength + 1)
     for length in count_range:
         print('[x] TESTING WITH LENGTH ' + str(length) + '')
@@ -31,12 +31,11 @@ def crack(fzip, fzipAES, prefix, alphabet, minlength, maxlength):
 
 # Initialize zip files input and start cracking. Print the result.
 def init(input, prefix, alphabet, minlength, maxlength):
-    fzip = zipfile.ZipFile(input)
     fzipAES = pyzipper.AESZipFile(input)
 
     print('[x] CRACKING')
     start = time.time()
-    result = crack(fzip, fzipAES, prefix, alphabet, minlength, maxlength)
+    result = crack(fzipAES, prefix, alphabet, minlength, maxlength)
     end = time.time()
     done = end - start
     print('[x] Done in ' + str(done) + ' seconds')
@@ -72,8 +71,8 @@ if __name__ == '__main__':
         maxlength = args.max
     if args.prefix != None:
         prefix = args.prefix
-        minlength = minlength - len(prefix)
-        maxlength = maxlength - len(prefix)
+        minlength = max(DEFAULT_MIN_LENGTH, minlength - len(prefix))
+        maxlength = min(maxlength, maxlength - len(prefix))
     if args.with_int:
         alphabet = NUMSET
     elif args.with_chr:
