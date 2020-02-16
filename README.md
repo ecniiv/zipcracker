@@ -39,7 +39,7 @@ DEFAULT_MAX_LENGTH      = 6
 
 ## Examples 
 
-To start cracking myfile.zip on passwords of size between 1 and 8 (default values) with integers and characters:
+To start cracking myfile.zip on passwords of size between 1 and 6 (default values) with integers and characters:
 ```
 python3 zipcracker.py --input myfile.zip
 ```
