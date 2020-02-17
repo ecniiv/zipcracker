@@ -83,6 +83,8 @@ if __name__ == '__main__':
         print('Error: verify the prefix you choose and the min and max password length.')
         parser.print_usage()
         exit(0)
+    minlength = minlength - len(prefix)
+    maxlength = maxlength - len(prefix)
     if args.with_int:
         alphabet = NUMSET
     elif args.with_chr:
