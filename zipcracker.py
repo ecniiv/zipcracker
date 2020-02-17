@@ -13,29 +13,36 @@ DEFAULT_ALPHABET        = NUMSET + CHARSET
 DEFAULT_MIN_LENGTH      = 1
 DEFAULT_MAX_LENGTH      = 6
 
+# Test to open the zip file with word as password. Return the word if success, None otherwise.
+def testing(fzipAES, word):
+    print('[x] TESTING WITH ' + word)
+    try:
+        fzipAES.setpassword(word.encode())
+        fzipAES.extractall()
+        return word
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except:
+        return None
+
 # Return the password if it founds it, None otherwise.
-def crack(fzipAES, prefix, alphabet, minlength, maxlength):
+def crackit(fzipAES, prefix, alphabet, minlength, maxlength):
     count_range = range(minlength, maxlength + 1)
     for length in count_range:
         print('[x] TESTING WITH LENGTH ' + str(length) + '')
         for chars in itertools.product(alphabet, repeat=length):
             word = prefix + ''.join(list(chars))
-            print('[x] TESTING WITH ' + word)
-            try:
-                fzipAES.setpassword(word.encode())
-                fzipAES.extractall()
-                return word
-            except:
-                pass
+            result = testing(fzipAES, word)
+            if result != None:
+                return result
     return None
 
 # Initialize zip files input and start cracking. Print the result.
 def init(input, prefix, alphabet, minlength, maxlength):
     fzipAES = pyzipper.AESZipFile(input)
-
     print('[x] CRACKING')
     start = time.time()
-    result = crack(fzipAES, prefix, alphabet, minlength, maxlength)
+    result = crackit(fzipAES, prefix, alphabet, minlength, maxlength)
     end = time.time()
     done = end - start
     print('[x] Done in ' + str(done) + ' seconds')
@@ -56,10 +63,11 @@ def parse_args():
     parser.add_argument('--prefix', '-p', action='store', type=str, required=False, help='prefix password')
     parser.add_argument('--min', action='store', type=int, required=False, help='min password length, default is ' + str(DEFAULT_MIN_LENGTH))
     parser.add_argument('--max', action='store', type=int, required=False, help='max password length, default is ' + str(DEFAULT_MAX_LENGTH))
-    return parser.parse_args()
+    return parser
 
 if __name__ == '__main__':
-    args        = parse_args()
+    parser      = parse_args()
+    args        = parser.parse_args()
     prefix      = DEFAULT_PREFIX
     alphabet    = DEFAULT_ALPHABET
     minlength   = DEFAULT_MIN_LENGTH
@@ -71,8 +79,10 @@ if __name__ == '__main__':
         maxlength = args.max
     if args.prefix != None:
         prefix = args.prefix
-        minlength = max(DEFAULT_MIN_LENGTH, minlength - len(prefix))
-        maxlength = min(maxlength, maxlength - len(prefix))
+    if (minlength <= len(prefix)) or (maxlength <= len(prefix)):
+        print('Error: verify the prefix you choose and the min and max password length.')
+        parser.print_usage()
+        exit(0)
     if args.with_int:
         alphabet = NUMSET
     elif args.with_chr:
@@ -85,3 +95,4 @@ if __name__ == '__main__':
         alphabet = DEFAULT_ALPHABET
 
     init(args.input, prefix, alphabet, minlength, maxlength)
+   
