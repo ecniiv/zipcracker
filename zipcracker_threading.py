@@ -5,7 +5,7 @@ import string
 import time
 import threading
 import multiprocessing
-from ctypes import c_char_p
+from ctypes import c_char_p, c_char, c_bool
 
 # Default values
 DEFAULT_PREFIX          = ''
@@ -16,7 +16,7 @@ DEFAULT_ALPHABET        = NUMSET + CHARSET
 DEFAULT_MIN_LENGTH      = 1
 DEFAULT_MAX_LENGTH      = 6
 
-password = multiprocessing.Value(c_char_p, "")
+found_password = multiprocessing.Value(c_bool, False)
 
 class ZipIt():
     def __init__(self, fzipAES, prefix, alphabet, minlength, maxlength):
@@ -25,12 +25,10 @@ class ZipIt():
         self.alphabet   = alphabet
         self.minlength  = minlength
         self.maxlength  = maxlength
-        self.password   = ""
-        self.manager    = multiprocessing.Manager()
 
     # Test to open the zip file with word as password. Return the word if success, None otherwise.
     def testing(self, word):
-        print('[x] TESTING WITH ' + word)
+        print("[x] TESTING WITH " + word)
         try:
             self.fzipAES.setpassword(word.encode())
             self.fzipAES.extractall()
@@ -41,53 +39,45 @@ class ZipIt():
             return False
 
     # Return the password if it founds it, None otherwise.
-    def crackit(self, length, password):
+    def crackit(self, length, found):
         length = length[0]
-        password = password[0]
-        print('[x] TESTING WITH LENGTH ' + str(length) + '')
+        found = found[0]
+        print("[x] TESTING WITH LENGTH " + str(length))
         for chars in itertools.product(self.alphabet, repeat=length):
-            word = self.prefix + ''.join(list(chars))
-            result = self.testing(word)
-            print("PW: " + password.value)
-            #time.sleep(0.05)
-            if self.password.value != "":
-                print("BREAKKK")
+            if found.value == True:
                 break
-            if result == True:
-                password = self.manager.Value('c', word)
-                print(password.value)
-                print("Password found !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                break
+            else:
+                word = self.prefix + ''.join(list(chars))
+                result = self.testing(word)
+                if result == True:
+                    found.value = True
+                    print("[+++++++] PASSWORD FOUND: " + word)
+                    break
 
     def start(self):
         count_range = range(self.minlength, self.maxlength + 1)
         processes = []
         for length in count_range:
-            p = multiprocessing.Process(target=self.crackit, args=([length], [password]))
+            p = multiprocessing.Process(target=self.crackit, args=([length], [found_password]))
             processes.append(p)
+        start = time.time()
+        print('[x] CRACKING')
         for p in processes:
             p.start()
         for p in processes:
             p.join()
-        print("pw: " + self.password.value)
+        if found_password == False:
+            print("[-] NO PASSWORD FOUND.")
+        end = time.time()
+        done = end - start
+        print("Done in " + str(done) + "seconds.")
 
 
 # Initialize zip files input and start cracking. Print the result.
 def init(input, prefix, alphabet, minlength, maxlength):
     fzipAES = pyzipper.AESZipFile(input)
-    print('[x] CRACKING')
-    start = time.time()
     zi = ZipIt(fzipAES, prefix, alphabet, minlength, maxlength)
     zi.start()
-    end = time.time()
-    done = end - start
-    print('[x] Done in ' + str(done) + ' seconds')
-    '''
-    if (result == None):
-        print("[-] No password found :(")
-    else:
-        print("[+] Password found: " + result)
-    '''
 
 # Initialize the arguments.
 def parse_args():
