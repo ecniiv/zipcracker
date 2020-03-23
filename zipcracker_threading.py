@@ -57,7 +57,8 @@ class ZipIt():
     def start(self):
         count_range = range(self.minlength, self.maxlength + 1)
         processes = []
-        for length in count_range:
+        # Pour chaque taille on lance un thread différent
+        for l in count_range:
             p = multiprocessing.Process(target=self.crackit, args=([length], [found_password]))
             processes.append(p)
         start = time.time()
@@ -125,4 +126,4 @@ if __name__ == '__main__':
         alphabet = DEFAULT_ALPHABET
 
     init(args.input, prefix, alphabet, minlength, maxlength)
-   
+
